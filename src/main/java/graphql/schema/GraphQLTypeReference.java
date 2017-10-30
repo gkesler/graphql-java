@@ -20,4 +20,9 @@ public class GraphQLTypeReference implements GraphQLType, GraphQLOutputType, Gra
     public String getName() {
         return name;
     }
+
+    @Override
+    public <U> U accept(GraphQLTypeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

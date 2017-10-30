@@ -69,4 +69,9 @@ public class InterfaceTypeDefinition extends AbstractNode implements TypeDefinit
                 ", directives=" + directives +
                 '}';
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

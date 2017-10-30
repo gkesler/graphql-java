@@ -47,4 +47,9 @@ public class ObjectField extends AbstractNode {
                 ", value=" + value +
                 '}';
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

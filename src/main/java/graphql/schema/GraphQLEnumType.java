@@ -130,6 +130,11 @@ public class GraphQLEnumType implements GraphQLType, GraphQLInputType, GraphQLOu
         return new Builder();
     }
 
+    @Override
+    public <U> U accept(GraphQLTypeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
+
     public static class Builder {
 
         private String name;

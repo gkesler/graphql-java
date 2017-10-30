@@ -115,6 +115,11 @@ public class GraphQLObjectType implements GraphQLType, GraphQLOutputType, GraphQ
         return new Builder();
     }
 
+    @Override
+    public <U> U accept(GraphQLTypeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
+
     @PublicApi
     public static class Builder {
         private String name;

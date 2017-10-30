@@ -78,4 +78,9 @@ public class VariableDefinition extends AbstractNode {
                 ", defaultValue=" + defaultValue +
                 '}';
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

@@ -70,4 +70,9 @@ public class GraphQLNonNull implements GraphQLType, GraphQLInputType, GraphQLOut
     public String getName() {
         return null;
     }
+
+    @Override
+    public <U> U accept(GraphQLTypeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

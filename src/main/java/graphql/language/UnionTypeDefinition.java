@@ -70,4 +70,9 @@ public class UnionTypeDefinition extends AbstractNode implements TypeDefinition 
                 ", memberTypes=" + memberTypes +
                 '}';
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

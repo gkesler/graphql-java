@@ -99,6 +99,11 @@ public class GraphQLInterfaceType implements GraphQLType, GraphQLOutputType, Gra
         return new Builder();
     }
 
+    @Override
+    public <U> U accept(GraphQLTypeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
+
 
     @PublicApi
     public static class Builder {

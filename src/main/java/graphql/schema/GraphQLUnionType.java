@@ -88,6 +88,11 @@ public class GraphQLUnionType implements GraphQLType, GraphQLOutputType, GraphQL
         return new Builder();
     }
 
+    @Override
+    public <U> U accept(GraphQLTypeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
+
     @PublicApi
     public static class Builder {
         private String name;

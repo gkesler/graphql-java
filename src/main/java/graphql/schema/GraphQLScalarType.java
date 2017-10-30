@@ -67,4 +67,9 @@ public class GraphQLScalarType implements GraphQLType, GraphQLInputType, GraphQL
                 ", coercing=" + coercing +
                 '}';
     }
+
+    @Override
+    public <U> U accept(GraphQLTypeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

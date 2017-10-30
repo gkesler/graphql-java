@@ -57,4 +57,9 @@ public class SchemaDefinition extends AbstractNode implements Definition {
                 ", operationTypeDefinitions=" + operationTypeDefinitions +
                 "}";
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

@@ -45,4 +45,8 @@ public class FloatValue extends AbstractNode implements Value {
 
     }
 
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

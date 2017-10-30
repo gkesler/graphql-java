@@ -12,4 +12,6 @@ public interface GraphQLType {
      * @return the name of the type which MUST fit within the regular expression {@code [_A-Za-z][_0-9A-Za-z]*}
      */
     String getName();
+    
+    <U> U accept (GraphQLTypeVisitor<U> visitor, U data);
 }

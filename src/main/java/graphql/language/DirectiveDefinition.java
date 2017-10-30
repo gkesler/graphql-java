@@ -57,4 +57,9 @@ public class DirectiveDefinition extends AbstractNode implements Definition {
                 ", directiveLocations=" + directiveLocations +
                 "}";
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

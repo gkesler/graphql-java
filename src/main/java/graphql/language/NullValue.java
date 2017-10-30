@@ -30,4 +30,9 @@ public class NullValue extends AbstractNode implements Value {
         return "NullValue{" +
                 '}';
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

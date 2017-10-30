@@ -44,4 +44,9 @@ public class TypeName extends AbstractNode implements Type {
                 "name='" + name + '\'' +
                 '}';
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

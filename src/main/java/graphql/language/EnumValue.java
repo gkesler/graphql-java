@@ -44,4 +44,9 @@ public class EnumValue extends AbstractNode implements Value {
                 "name='" + name + '\'' +
                 '}';
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

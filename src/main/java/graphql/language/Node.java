@@ -23,4 +23,6 @@ public interface Node {
      * @return isEqualTo
      */
     boolean isEqualTo(Node node);
+    
+    <U> U accept (NodeVisitor<U> visitor, U data);
 }

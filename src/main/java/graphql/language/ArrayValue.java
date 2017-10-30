@@ -43,4 +43,9 @@ public class ArrayValue extends AbstractNode implements Value {
                 "values=" + values +
                 '}';
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

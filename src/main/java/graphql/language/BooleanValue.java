@@ -43,4 +43,9 @@ public class BooleanValue extends AbstractNode implements Value {
                 "value=" + value +
                 '}';
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

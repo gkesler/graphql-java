@@ -76,4 +76,9 @@ public class EnumTypeDefinition extends AbstractNode implements TypeDefinition {
                 ", directives=" + directives +
                 '}';
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

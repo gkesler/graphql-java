@@ -70,4 +70,9 @@ public class FragmentSpread extends AbstractNode implements Selection {
                 ", directives=" + directives +
                 '}';
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }

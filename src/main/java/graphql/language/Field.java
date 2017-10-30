@@ -137,4 +137,9 @@ public class Field extends AbstractNode implements Selection {
                 ", selectionSet=" + selectionSet +
                 '}';
     }
+
+    @Override
+    public <U> U accept(NodeVisitor<U> visitor, U data) {
+        return visitor.visit(this, data);
+    }
 }
