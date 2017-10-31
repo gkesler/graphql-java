@@ -20,6 +20,7 @@ import graphql.PublicApi;
 @PublicApi
 public interface NodeVisitor<U> {
     U visit (Argument node, U data);
+    U visit (ArrayValue node, U data);
     U visit (BooleanValue node, U data);
     U visit (Directive node, U data);
     U visit (DirectiveDefinition node, U data);
