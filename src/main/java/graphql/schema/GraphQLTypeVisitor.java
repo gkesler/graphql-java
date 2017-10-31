@@ -27,4 +27,14 @@ public interface GraphQLTypeVisitor<U> {
     U visit (GraphQLScalarType type, U data);
     U visit (GraphQLTypeReference type, U data);
     U visit (GraphQLUnionType type, U data);
+    
+    /**
+     * Signal that a type node is being left after visiting
+     * all its children
+     * 
+     * @param type a type node
+     * @param data a piece of data propagated across visit methods (traversal)
+     * @return [modified] data carried across visit methods
+     */
+    U leave (GraphQLType type, U data);    
 }

@@ -56,4 +56,14 @@ public interface NodeVisitor<U> {
     U visit (UnionTypeDefinition node, U data);
     U visit (VariableDefinition node, U data);
     U visit (VariableReference node, U data);
+    
+    /**
+     * This method should be called when the node
+     * is being left after visiting all its children
+     * 
+     * @param node node being left
+     * @param data parameter that Visitor carries out
+     * @return [modified] input parameter
+     */
+    U leave (Node node, U data);
 }
