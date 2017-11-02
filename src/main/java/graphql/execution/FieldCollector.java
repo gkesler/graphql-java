@@ -20,6 +20,10 @@ import java.util.List;
 import java.util.Map;
 
 import static graphql.execution.TypeFromAST.getTypeFromAST;
+import graphql.language.LanguageUtil;
+import graphql.language.LanguageUtil.Markers;
+import graphql.language.NodeVisitorStub;
+import graphql.schema.GraphQLTypeVisitorStub;
 
 /**
  * A field collector can iterate over field selection sets and build out the sub fields that have been selected,
@@ -72,62 +76,92 @@ public class FieldCollector {
         return subFields;
     }
 
-
     private void collectFields(FieldCollectorParameters parameters, SelectionSet selectionSet, List<String> visitedFragments, Map<String, List<Field>> fields) {
-
-        for (Selection selection : selectionSet.getSelections()) {
-            if (selection instanceof Field) {
-                collectField(parameters, fields, (Field) selection);
-            } else if (selection instanceof InlineFragment) {
-                collectInlineFragment(parameters, visitedFragments, fields, (InlineFragment) selection);
-            } else if (selection instanceof FragmentSpread) {
-                collectFragmentSpread(parameters, visitedFragments, fields, (FragmentSpread) selection);
+        LanguageUtil.depthFirst(selectionSet.getSelections(), null, new NodeVisitorStub<Object>() {
+            @Override
+            public Object visit(InlineFragment node, Object data) {
+                return collectInlineFragment(parameters, visitedFragments, fields, node);
             }
-        }
+
+            @Override
+            public Object visit(FragmentSpread node, Object data) {
+                return collectFragmentSpread(parameters, visitedFragments, fields, node);
+            }
+
+            @Override
+            public Object visit(Field node, Object data) {
+                return collectField(parameters, fields, node);
+            }
+
+            private Object collectFragmentSpread(FieldCollectorParameters parameters, List<String> visitedFragments, Map<String, List<Field>> fields, FragmentSpread fragmentSpread) {
+                do {
+                    if (visitedFragments.contains(fragmentSpread.getName())) {
+                        break;
+                    }
+                    if (!conditionalNodes.shouldInclude(parameters.getVariables(), fragmentSpread.getDirectives())) {
+                        break;
+                    }
+                    visitedFragments.add(fragmentSpread.getName());
+                    FragmentDefinition fragmentDefinition = parameters.getFragmentsByName().get(fragmentSpread.getName());
+
+                    if (!conditionalNodes.shouldInclude(parameters.getVariables(), fragmentDefinition.getDirectives())) {
+                        break;
+                    }
+                    if (!doesFragmentConditionMatch(parameters, fragmentDefinition)) {
+                        break;
+                    }
+
+                    LanguageUtil.depthFirst(fragmentDefinition.getSelectionSet().getSelections(), null, this);
+                    return null;
+                } while (false);
+                
+                // abort recursion
+                return Markers.STOP;
+            }
+
+            private Object collectInlineFragment(FieldCollectorParameters parameters, List<String> visitedFragments, Map<String, List<Field>> fields, InlineFragment inlineFragment) {
+                do {
+                    if (!conditionalNodes.shouldInclude(parameters.getVariables(), inlineFragment.getDirectives()) ||
+                            !doesFragmentConditionMatch(parameters, inlineFragment)) {
+                        break;
+                    }
+
+                    return null;
+                } while (false);
+                
+                // abort recursion
+                return Markers.STOP;
+            }
+
+            private Object collectField(FieldCollectorParameters parameters, Map<String, List<Field>> fields, Field field) {
+                do {
+                    if (!conditionalNodes.shouldInclude(parameters.getVariables(), field.getDirectives())) {
+                        break;
+                    }
+
+                    List<Field> groupped = new ArrayList<>();
+                    nvl(fields.putIfAbsent(getFieldEntryKey(field), groupped), groupped)
+                        .add(field);
+                } while (false);
+                
+                // abort recursion
+                return Markers.STOP;
+            }
+        });
     }
 
-    private void collectFragmentSpread(FieldCollectorParameters parameters, List<String> visitedFragments, Map<String, List<Field>> fields, FragmentSpread fragmentSpread) {
-        if (visitedFragments.contains(fragmentSpread.getName())) {
-            return;
-        }
-        if (!conditionalNodes.shouldInclude(parameters.getVariables(), fragmentSpread.getDirectives())) {
-            return;
-        }
-        visitedFragments.add(fragmentSpread.getName());
-        FragmentDefinition fragmentDefinition = parameters.getFragmentsByName().get(fragmentSpread.getName());
-
-        if (!conditionalNodes.shouldInclude(parameters.getVariables(), fragmentDefinition.getDirectives())) {
-            return;
-        }
-        if (!doesFragmentConditionMatch(parameters, fragmentDefinition)) {
-            return;
-        }
-        collectFields(parameters, fragmentDefinition.getSelectionSet(), visitedFragments, fields);
+    private static <T> T nvl (T value, T defaultValue) {
+        return (value == null)
+            ? defaultValue
+            : value;
     }
 
-    private void collectInlineFragment(FieldCollectorParameters parameters, List<String> visitedFragments, Map<String, List<Field>> fields, InlineFragment inlineFragment) {
-        if (!conditionalNodes.shouldInclude(parameters.getVariables(), inlineFragment.getDirectives()) ||
-                !doesFragmentConditionMatch(parameters, inlineFragment)) {
-            return;
-        }
-        collectFields(parameters, inlineFragment.getSelectionSet(), visitedFragments, fields);
-    }
-
-    private void collectField(FieldCollectorParameters parameters, Map<String, List<Field>> fields, Field field) {
-        if (!conditionalNodes.shouldInclude(parameters.getVariables(), field.getDirectives())) {
-            return;
-        }
-        String name = getFieldEntryKey(field);
-        fields.putIfAbsent(name, new ArrayList<>());
-        fields.get(name).add(field);
-    }
-
-    private String getFieldEntryKey(Field field) {
+    private static String getFieldEntryKey(Field field) {
         if (field.getAlias() != null) return field.getAlias();
         else return field.getName();
     }
 
-
+    // fIXME: shall be static method
     private boolean doesFragmentConditionMatch(FieldCollectorParameters parameters, InlineFragment inlineFragment) {
         if (inlineFragment.getTypeCondition() == null) {
             return true;
@@ -137,25 +171,32 @@ public class FieldCollector {
         return checkTypeCondition(parameters, conditionType);
     }
 
+    // fIXME: shall be static method
     private boolean doesFragmentConditionMatch(FieldCollectorParameters parameters, FragmentDefinition fragmentDefinition) {
         GraphQLType conditionType;
         conditionType = getTypeFromAST(parameters.getGraphQLSchema(), fragmentDefinition.getTypeCondition());
         return checkTypeCondition(parameters, conditionType);
     }
 
+    // fIXME: shall be static method
     private boolean checkTypeCondition(FieldCollectorParameters parameters, GraphQLType conditionType) {
         GraphQLObjectType type = parameters.getObjectType();
         if (conditionType.equals(type)) {
             return true;
         }
 
-        if (conditionType instanceof GraphQLInterfaceType) {
-            List<GraphQLObjectType> implementations = schemaUtil.findImplementations(parameters.getGraphQLSchema(), (GraphQLInterfaceType) conditionType);
-            return implementations.contains(type);
-        } else if (conditionType instanceof GraphQLUnionType) {
-            return ((GraphQLUnionType) conditionType).getTypes().contains(type);
-        }
-        return false;
+        return conditionType.accept(new GraphQLTypeVisitorStub<Boolean>() {
+            @Override
+            public Boolean visit(GraphQLUnionType conditionType, Boolean data) {
+                return conditionType.getTypes().contains(type);
+            }
+
+            @Override
+            public Boolean visit(GraphQLInterfaceType conditionType, Boolean data) {
+                List<GraphQLObjectType> implementations = schemaUtil.findImplementations(parameters.getGraphQLSchema(), conditionType);
+                return implementations.contains(type);
+            }
+        }, false);
     }
 
 
